@@ -6,7 +6,8 @@ namespace KihBot
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            DiscordBot kihBot = new DiscordBot();
+            kihBot.RunAsync().GetAwaiter().GetResult();
         }
     }
 }
