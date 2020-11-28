@@ -8,12 +8,18 @@ using DSharpPlus.CommandsNext.Attributes;
 
 namespace KihBot.Modules
 {
-    class TestModule : BaseCommandModule
+    public class TestModule : BaseCommandModule
     {
         [Command("test")]
         public async Task TestCommand(CommandContext context)
         {
             await context.RespondAsync("D#+ COMMAND EXECUTED");
+        }
+
+        [Command("info")]
+        public async Task GetGuildCommand(CommandContext context)
+        {
+            await context.RespondAsync($"ID serwera: {context.Guild.Id}");
         }
     }
 }

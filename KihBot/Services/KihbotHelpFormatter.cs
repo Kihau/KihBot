@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace KihBot.Services
 {
-    public class KihbotHelpFormatter : BaseHelpFormatter
+    class KihbotHelpFormatter : BaseHelpFormatter
     {
         // protected DiscordEmbedBuilder _embed;
         // protected StringBuilder _strBuilder;
