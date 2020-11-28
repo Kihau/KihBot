@@ -9,24 +9,20 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using KihBot.Database;
+using Newtonsoft.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace KihBot
 {
     public class DiscordBot
     {
         private DiscordClient Clinet { get; set; }
-        private Dictionary<ulong, string> prefixes;  // Get config class/service/something here (BotConfiguration /w dependency injection)
+        private Configuration Config { get; set; }
 
         public DiscordBot()
         {
-            prefixes = new Dictionary<ulong, string>   // Delete
-            {
-                // Casement
-                { 519857141494841344, "/" },
-                // Schowek
-                { 539093667365912576, "hey" }
-            };
-
+            LoadData();
             ConfigureClient();
             var services = ConfigureServices();
             ConfigureCommands(services);
@@ -39,31 +35,37 @@ namespace KihBot
             await Task.Delay(Timeout.Infinite);
         }
 
+        private void LoadData()
+        {
+            string json = File.ReadAllText("config.json");
+            Config = JsonConvert.DeserializeObject<Configuration>(json);
+        }
+
         private void ConfigureClient()
         {
-            var config = new DiscordConfiguration()
+            var clientconfig = new DiscordConfiguration()
             {
                 AutoReconnect = true,
                 Intents = DiscordIntents.All,
                 MinimumLogLevel = Microsoft.Extensions.Logging.LogLevel.Debug,
-                Token = File.ReadAllText("thisisaverylongtextfilenamethatcontainsdiscordbottokenthatisusedtologin.txt"),
+                Token = Config.Token,
                 TokenType = TokenType.Bot,           
             };
-            Clinet = new DiscordClient(config);
+            Clinet = new DiscordClient(clientconfig);
         }
 
         private void ConfigureCommands(IServiceProvider services)
         {
             var resolver = new PrefixResolverDelegate(async(message) =>
             {             
-                var Id = message.Channel.GuildId;                                     // Get the Id of the server
-                if (prefixes.TryGetValue(Id, out string prefix))                      // Check if dictionary contains Id 
+                var Id = message.Channel.GuildId;   // Get the Id of the server
+                if (Config.Prefixes.TryGetValue(Id, out string prefix))   // Check if dictionary contains Id 
                     return message.Content.StartsWith(prefix) ? prefix.Length : -1;   // Check if message starts with the prefix 
-                else if (message.Content.StartsWith("/")) return 1;                   // Check if message starts with a default prefix "/"
-                else return message.Content == "/help" ? 1 : -1;                      // Check if message is a default help command
+                else if (message.Content.StartsWith(Config.DefaultPrefix)) return Config.DefaultPrefix.Length;   // Check if message starts with a default prefix "/"
+                else return message.Content == Config.DefaultCommand ? 1 : -1;   // Check if message is a default help command
             });
 
-            var config = new CommandsNextConfiguration()
+            var commandconfig = new CommandsNextConfiguration()
             {
                 //StringPrefixes = new[] { "/" },
                 PrefixResolver = resolver,
@@ -74,13 +76,15 @@ namespace KihBot
                 Services = services
             };
 
-            var commands = Clinet.UseCommandsNext(config);
+            var commands = Clinet.UseCommandsNext(commandconfig);
             commands.RegisterCommands(Assembly.GetExecutingAssembly());
         }
 
         private IServiceProvider ConfigureServices()
         {
-            return null;
+            return new ServiceCollection()
+                .AddSingleton<Configuration>(Config)
+                .BuildServiceProvider();
         }
     }
 }
