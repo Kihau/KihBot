@@ -37,8 +37,14 @@ namespace KihBot
 
         private void LoadData()
         {
+
+            // Deserialize
             string json = File.ReadAllText("config.json");
             Config = JsonConvert.DeserializeObject<Configuration>(json);
+
+            // Clear out config from unnecessary stuf
+            Config.Prefixes.Where(x => x.Value == Config.DefaultPrefix)
+                .Select(x=>x.Key).ToList().ForEach(x => Config.Prefixes.Remove(x));
         }
 
         private void ConfigureClient()
@@ -58,11 +64,12 @@ namespace KihBot
         {
             var resolver = new PrefixResolverDelegate(async(message) =>
             {             
-                var Id = message.Channel.GuildId;   // Get the Id of the server
-                if (Config.Prefixes.TryGetValue(Id, out string prefix))   // Check if dictionary contains Id 
-                    return message.Content.StartsWith(prefix) ? prefix.Length : -1;   // Check if message starts with the prefix 
-                else if (message.Content.StartsWith(Config.DefaultPrefix)) return Config.DefaultPrefix.Length;   // Check if message starts with a default prefix "/"
-                else return message.Content == Config.DefaultCommand ? 1 : -1;   // Check if message is a default help command
+                var guildId = message.Channel.GuildId;                              // Get the Id of the server
+                if (Config.Prefixes.TryGetValue(guildId, out string prefix))        // Check if dictionary contains Id 
+                    return message.Content.StartsWith(prefix) ? prefix.Length : -1; // Check if message starts with the prefix 
+                else if (message.Content.StartsWith(Config.DefaultPrefix))          // Check if message starts with a default prefix "/"
+                    return Config.DefaultPrefix.Length;   
+                else return message.Content == Config.DefaultCommand ? 1 : -1;      // Check if message is a default help command
             });
 
             var commandconfig = new CommandsNextConfiguration()
