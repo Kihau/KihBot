@@ -12,12 +12,15 @@ using System.Threading.Tasks;
 using KihBot.Database;
 using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.Extensions;
 
 namespace KihBot
 {
     public class DiscordBot
     {
-        private DiscordClient Clinet { get; set; }
+        private DiscordClient Client { get; set; }
         private Configuration Config { get; set; }
 
         public DiscordBot()
@@ -31,7 +34,7 @@ namespace KihBot
         public async Task RunAsync()
         {
             DiscordActivity activity = new DiscordActivity("Hollow Knight Silksong Closed Beta", ActivityType.Playing);
-            await Clinet.ConnectAsync(activity, UserStatus.DoNotDisturb, DateTimeOffset.Now);
+            await Client.ConnectAsync(activity, UserStatus.DoNotDisturb, DateTimeOffset.Now);
             await Task.Delay(Timeout.Infinite);
         }
 
@@ -53,37 +56,45 @@ namespace KihBot
             {
                 AutoReconnect = true,
                 Intents = DiscordIntents.All,
-                MinimumLogLevel = Microsoft.Extensions.Logging.LogLevel.Debug,
+                LogTimestampFormat = "HH:mm:ss",
                 Token = Config.Token,
                 TokenType = TokenType.Bot,           
             };
-            Clinet = new DiscordClient(clientconfig);
+
+            Client = new DiscordClient(clientconfig);
+
+            Client.UseInteractivity(new InteractivityConfiguration()
+            {
+                PollBehaviour = PollBehaviour.KeepEmojis,
+                Timeout = TimeSpan.FromSeconds(30)
+            });
+
         }
 
         private void ConfigureCommands(IServiceProvider services)
         {
-            var resolver = new PrefixResolverDelegate(async(message) =>
-            {             
+            var resolver = new PrefixResolverDelegate(async (message) =>
+            {
                 var guildId = message.Channel.GuildId;                              // Get the Id of the server
                 if (Config.Prefixes.TryGetValue(guildId, out string prefix))        // Check if dictionary contains Id 
                     return message.Content.StartsWith(prefix) ? prefix.Length : -1; // Check if message starts with the prefix 
                 else if (message.Content.StartsWith(Config.DefaultPrefix))          // Check if message starts with a default prefix "/"
-                    return Config.DefaultPrefix.Length;   
+                    return Config.DefaultPrefix.Length;                             // Return length to skip fist characters of a message
                 else return message.Content == Config.DefaultCommand ? 1 : -1;      // Check if message is a default help command
             });
 
             var commandconfig = new CommandsNextConfiguration()
             {
                 //StringPrefixes = new[] { "/" },
-                PrefixResolver = resolver,
+                PrefixResolver = resolver,                
                 DmHelp = false,
-                EnableDefaultHelp = false,
+                EnableDefaultHelp = true,
                 EnableMentionPrefix = false,
                 EnableDms = false,
                 Services = services
             };
 
-            var commands = Clinet.UseCommandsNext(commandconfig);
+            var commands = Client.UseCommandsNext(commandconfig);
             commands.RegisterCommands(Assembly.GetExecutingAssembly());
         }
 

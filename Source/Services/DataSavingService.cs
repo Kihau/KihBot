@@ -9,9 +9,9 @@ namespace KihBot.Services
     /// <summary>
     /// A class used to serialize/deserialize and manage data
     /// </summary>
-    class DatabaseService
+    class DataSavingService
     {
-        public DatabaseService() { }
+        public DataSavingService() { }
         // Add auto serializing timer with interval of 1h (autosaving)
     }
 }

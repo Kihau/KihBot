@@ -9,6 +9,7 @@ using DSharpPlus;
 using KihBot.Database;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity.Extensions;
 
 namespace KihBot.Modules
 {
@@ -36,14 +37,6 @@ namespace KihBot.Modules
             await message.DeleteAsync();
         }
 
-        [Command("yo")]
-        public async Task YoCommand(CommandContext context)
-        {
-            var message = (await context.Channel.GetMessagesAsync(2)).First();
-            var time = DateTime.Now - message.CreationTimestamp;
-            await context.RespondAsync(time.TotalSeconds.ToString());
-        }
-
         [Command("prefix")]
         public async Task SetPrefixCommand(CommandContext context, string prefix)
         {
@@ -53,10 +46,69 @@ namespace KihBot.Modules
                     Config.Prefixes[context.Guild.Id] = prefix;
                 else Config.Prefixes.Remove(context.Guild.Id);   // Remove unnecessary field
             }
-            // Don't add default prefixes to the the dictionary to keep the config clean
+            // Don't add default prefixes to the the dictionary to keep the config file clean
             else if (prefix != Config.DefaultPrefix) Config.Prefixes.Add(context.Guild.Id, prefix);
 
             await context.RespondAsync($"Ustawiono prefix na: `{prefix}`");
         }
+
+        [Command("nuke")]
+        public async Task NukeChannelAsync(CommandContext context, DiscordChannel req_channel = null)
+        {
+            var channel = req_channel ?? context.Channel;
+
+            if (channel.Type == ChannelType.Text)
+            {
+                var confirm = new DiscordEmbedBuilder()
+                    .WithTitle($"__***DETONACJA KANAŁU:***__ `{channel.Name}`")
+                    .AddField($"Czy jesteś pewny, że chcesz nieodwracalnie wyczyścić ten kanał?",
+                    ":white_check_mark: - TAK, chcę wyczyścić ten kanał\n :x: - NIE, rozmyśliłem się")
+                    .WithColor(DiscordColor.Violet).Build();
+                var message = await context.RespondAsync(embed: confirm);
+
+                await message.CreateReactionAsync(DiscordEmoji.FromName(context.Client, ":white_check_mark:"));
+                await message.CreateReactionAsync(DiscordEmoji.FromName(context.Client, ":x:"));
+
+                var result = await message.WaitForReactionAsync(context.User, TimeSpan.FromSeconds(10));
+
+                if (!result.TimedOut && result.Result.Emoji == DiscordEmoji.FromName(context.Client, ":white_check_mark:"))
+                {
+                    List<DiscordOverwriteBuilder> overrites = new List<DiscordOverwriteBuilder>();
+                    foreach (var overwrite in channel.PermissionOverwrites.AsEnumerable())
+                        overrites.Add(await new DiscordOverwriteBuilder().FromAsync(overwrite));
+
+                    await context.Guild.CreateChannelAsync(channel.Name, channel.Type, channel.Parent, channel.Topic, null, null, overrites, channel.IsNSFW, channel.PerUserRateLimit);
+                    await channel.DeleteAsync();
+                }
+                await message.DeleteAsync();
+            }
+        }
+
+        [Command("clone")]
+        public async Task CloneChannelAsync(CommandContext context, string name, DiscordChannel req_channel)
+        {
+            var channel = req_channel ?? context.Channel;
+
+            if (channel.Type == ChannelType.Text)
+            {
+                List<DiscordOverwriteBuilder> overrites = new List<DiscordOverwriteBuilder>();
+                foreach (var overwrite in channel.PermissionOverwrites.AsEnumerable())
+                    overrites.Add(await new DiscordOverwriteBuilder().FromAsync(overwrite));
+
+                await context.Guild.CreateChannelAsync(name, channel.Type, channel.Parent, channel.Topic, null, null, overrites, channel.IsNSFW, channel.PerUserRateLimit);
+            }
+        }
+
+        [Command("kick")]
+        public async Task KickUserCommand(CommandContext context, DiscordMember req_user, [RemainingText] string reason = null)
+            => await req_user.RemoveAsync(reason);
+
+
+        [Command("ban")]
+        public async Task BanUserCommand(CommandContext context, DiscordMember req_user, DateTime time, [RemainingText] string reason = null)
+        {
+
+        }
+
     }
 }
