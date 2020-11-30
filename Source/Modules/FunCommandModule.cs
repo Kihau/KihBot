@@ -14,9 +14,15 @@ namespace KihBot.Modules
         [Command("nice")]
         public async Task NiceCommand(CommandContext context) 
             => await context.RespondAsync("**NICE** :)");
-            
+
         [Command("8ball")]
         public async Task MagicBallCommand(CommandContext context, [RemainingText]string text)
+        {
+            Random rng = new Random();
+        }
+
+        [Command("8balladd")]
+        public async Task MagicBallAddCommand(CommandContext context, [RemainingText] string text)
         {
             Random rng = new Random();
         }

@@ -9,26 +9,28 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using KihBot.Database;
-using Newtonsoft.Json;
+using KihBot.Data;
 using Microsoft.Extensions.DependencyInjection;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
+using KihBot.Services;
 
 namespace KihBot
 {
     public class DiscordBot
     {
         private DiscordClient Client { get; set; }
-        private Configuration Config { get; set; }
+        private ConfigData Config { get; set; }
+        private DataSavingService Data { get; set; }
 
         public DiscordBot()
         {
-            LoadData();
-            ConfigureClient();
             var services = ConfigureServices();
-            ConfigureCommands(services);
+            LoadData(services);
+
+            ConfigureClient();
+            ConfigureCommands(services); 
         }
 
         public async Task RunAsync()
@@ -38,14 +40,13 @@ namespace KihBot
             await Task.Delay(Timeout.Infinite);
         }
 
-        private void LoadData()
+        private void LoadData(IServiceProvider services)
         {
+            Data = services.GetService<DataSavingService>();
+            Data.Deserialize();
+            Config = (ConfigData)services.GetService<List<IData>>().Single(x => x.GetType() == typeof(ConfigData));
 
-            // Deserialize
-            string json = File.ReadAllText("config.json");
-            Config = JsonConvert.DeserializeObject<Configuration>(json);
-
-            // Clear out config from unnecessary stuf
+            // Clear out config from unnecessary stuff
             Config.Prefixes.Where(x => x.Value == Config.DefaultPrefix)
                 .Select(x=>x.Key).ToList().ForEach(x => Config.Prefixes.Remove(x));
         }
@@ -85,12 +86,13 @@ namespace KihBot
 
             var commandconfig = new CommandsNextConfiguration()
             {
-                //StringPrefixes = new[] { "/" },
+                //StringPrefixes = new[] { "/" },               
                 PrefixResolver = resolver,                
                 DmHelp = false,
                 EnableDefaultHelp = true,
                 EnableMentionPrefix = false,
                 EnableDms = false,
+                // Create custom event handler
                 Services = services
             };
 
@@ -100,8 +102,15 @@ namespace KihBot
 
         private IServiceProvider ConfigureServices()
         {
+            List<IData> DataList = new List<IData>
+            {
+                new ConfigData(),
+                new FunData()
+            };
+
             return new ServiceCollection()
-                .AddSingleton<Configuration>(Config)
+                .AddSingleton<List<IData>>(DataList)
+                .AddSingleton<DataSavingService>()
                 .BuildServiceProvider();
         }
     }

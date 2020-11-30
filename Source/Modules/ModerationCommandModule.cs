@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus;
-using KihBot.Database;
+using KihBot.Data;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Extensions;
@@ -16,7 +16,7 @@ namespace KihBot.Modules
     [Description("Module containing moderator commands"), RequirePermissions(Permissions.Administrator)]
     public class ModerationCommandModule : BaseCommandModule
     {
-        public Configuration Config { get; set; }
+        public List<IData> Data { get; set; }
 
         [Command("clear")]
         public async Task ClearMessagesCommand(CommandContext context, int amount)
@@ -26,7 +26,7 @@ namespace KihBot.Modules
             DiscordMessage message;
             var totaldeleted = messages.ToList().Count - 1;
 
-            if (totaldeleted < 0)
+            if (totaldeleted > 0)
             {
                 await context.Channel.DeleteMessagesAsync(messages);
                 message = await context.RespondAsync($"Usunięto `{totaldeleted}` wiadomości");
@@ -40,14 +40,15 @@ namespace KihBot.Modules
         [Command("prefix")]
         public async Task SetPrefixCommand(CommandContext context, string prefix)
         {
-            if (Config.Prefixes.ContainsKey(context.Guild.Id))
+            var config = (ConfigData)Data.Single(x => x.GetType() == typeof(ConfigData));
+            if (config.Prefixes.ContainsKey(context.Guild.Id))
             {
-                if (prefix != Config.DefaultPrefix)
-                    Config.Prefixes[context.Guild.Id] = prefix;
-                else Config.Prefixes.Remove(context.Guild.Id);   // Remove unnecessary field
+                if (prefix != config.DefaultPrefix)
+                    config.Prefixes[context.Guild.Id] = prefix;
+                else config.Prefixes.Remove(context.Guild.Id);   // Remove unnecessary field
             }
             // Don't add default prefixes to the the dictionary to keep the config file clean
-            else if (prefix != Config.DefaultPrefix) Config.Prefixes.Add(context.Guild.Id, prefix);
+            else if (prefix != config.DefaultPrefix) config.Prefixes.Add(context.Guild.Id, prefix);
 
             await context.RespondAsync($"Ustawiono prefix na: `{prefix}`");
         }
@@ -71,8 +72,14 @@ namespace KihBot.Modules
 
                 var result = await message.WaitForReactionAsync(context.User, TimeSpan.FromSeconds(10));
 
+                await message.DeleteAsync();
+
                 if (!result.TimedOut && result.Result.Emoji == DiscordEmoji.FromName(context.Client, ":white_check_mark:"))
                 {
+                    await context.RespondAsync("__**TACTICAL NUKE INCOMING!**__\nhttps://tenor.com/view/explosion-mushroom-cloud-atomic-bomb-bomb-boom-gif-4464831");
+
+                    await Task.Delay(1000);
+
                     List<DiscordOverwriteBuilder> overrites = new List<DiscordOverwriteBuilder>();
                     foreach (var overwrite in channel.PermissionOverwrites.AsEnumerable())
                         overrites.Add(await new DiscordOverwriteBuilder().FromAsync(overwrite));
@@ -80,7 +87,6 @@ namespace KihBot.Modules
                     await context.Guild.CreateChannelAsync(channel.Name, channel.Type, channel.Parent, channel.Topic, null, null, overrites, channel.IsNSFW, channel.PerUserRateLimit);
                     await channel.DeleteAsync();
                 }
-                await message.DeleteAsync();
             }
         }
 

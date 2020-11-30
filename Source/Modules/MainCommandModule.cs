@@ -1,7 +1,6 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using KihBot.Database;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -15,26 +14,6 @@ namespace KihBot.Modules
     [Description("Module contaning main commands")]
     public partial class MainCommandModule : BaseCommandModule
     {
-        public Configuration Config { get; set; }
-
-        [Command("stop"), RequireOwner, Hidden]
-        public async Task StopBotCommand(CommandContext context)
-        {
-            await context.RespondAsync("Wyłącznie bota. . .");
-
-            string json = JsonConvert.SerializeObject(Config, Formatting.Indented);
-            File.WriteAllText("config.json", json);
-
-            await context.Client.DisconnectAsync();
-            context.Client.Dispose();
-        }
-
-        [Command("config"), RequireOwner, Hidden]
-        public async Task DisplayBotConfigCommand(CommandContext context)
-        {
-
-        }
-
         [Command("avatar")]
         public async Task DisplayAvatarCommand(CommandContext context, DiscordUser req_user = null, ushort? req_size = null)
         {
