@@ -43,7 +43,8 @@ namespace KihBot
 
         private void LoadData(IServiceProvider services)
         {
-            Data = services.GetService<DataService>();
+            Data = services.GetRequiredService<DataService>();
+            Data.DeserializeData();
             Config = services.GetRequiredService<ConfigData>();
         }
 
@@ -99,11 +100,10 @@ namespace KihBot
         private IServiceProvider ConfigureServices()
         {
             var collection = new ServiceCollection()
-                .AddSingleton<ConfigData>(service => (ConfigData)JsonSerializer.Deserialize(File.ReadAllText("config.json"), typeof(ConfigData)))
-                .AddSingleton<FunData>(service => (FunData)JsonSerializer.Deserialize(File.ReadAllText("fundata.json"), typeof(FunData)))
-                .AddSingleton<DataService>();  
-
-
+                .AddSingleton<ConfigData>()
+                .AddSingleton<FunData>()
+                .AddSingleton<DataService>();
+            
             return collection.BuildServiceProvider();
         }
     }

@@ -31,7 +31,7 @@ namespace KihBot.Modules
                     .AddField("Magiczna kula mówi:", Data.BaseAnswers[rng.Next(0, Data.BaseAnswers.Length)])
                     .WithColor(Config.Color)
                     .Build();
-
+               
                 await context.RespondAsync(embed: embed);
             }
 

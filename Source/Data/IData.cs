@@ -7,15 +7,12 @@ using System.Threading.Tasks;
 
 namespace KihBot.Data
 {
-    public class FunData : IData
+    public interface IData
     {
-        public string[] BaseAnswers { get; set; }
-        public Dictionary<ulong, List<string>> CustomAnswers { get; set; }
-
         [JsonIgnore]
-        public string FileName { get; init; }
-        public FunData() => FileName = "fundata.json";
+        string FileName { get; init; }
 
+        // Same method used in all classes implementing IData
         public void LoadData(IData data)
         {
             var properties = this.GetType().GetProperties();

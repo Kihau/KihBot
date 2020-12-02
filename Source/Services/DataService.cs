@@ -16,64 +16,44 @@ namespace KihBot.Services
     /// </summary>
     public class DataService
     {
-        private IServiceProvider Services { get; set;  }
+        public List<IData> DataList { get; set; }
 
         public DataService(IServiceProvider services)
         {
-            this.Services = services;
-        }
-
-        public void Serialize()
-        {
-            SerializeSingle<ConfigData>("config.json");
-            SerializeSingle<FunData>("fundata.json");
-        }
-
-        public void SerializeSingle<T>(string file)
-        {
-            var options = new JsonSerializerOptions()
+            DataList = new List<IData>()
             {
-                WriteIndented = true
+                services.GetRequiredService<ConfigData>(),
+                services.GetRequiredService<FunData>()
             };
-
-            var json = JsonSerializer.Serialize(Services.GetRequiredService<T>(), typeof(T), options);
-
-            if (!File.Exists(file))
-                File.Create(file).Close();
-
-            File.WriteAllText(file, json);
         }
 
-        public T DeserializeSingle<T>(string file)
+        public void SerializeData()
         {
-            if (File.Exists(file))
+            foreach (var set in DataList)
             {
-                var json = File.ReadAllText(file);
-                return (T)JsonSerializer.Deserialize(json, typeof(T));
-            }
-            else
-            {
-                File.Create(file).Close();
-                throw new Exception("Couldn't deserialize data");
+                var options = new JsonSerializerOptions()
+                {
+                    WriteIndented = true
+                };
+
+                var json = JsonSerializer.Serialize(set, set.GetType(), options);
+
+                if (!File.Exists(set.FileName))
+                    File.Create(set.FileName).Close();
+
+                File.WriteAllText(set.FileName, json);
             }
         }
 
-        //public void Deserialize()
-        //{
-        //    for (int i = 0; i < Data.Count; i++)
-        //    {
-        //        if (File.Exists(Data[i].FileName))
-        //        {
-        //            var json = File.ReadAllText(Data[i].FileName);
-        //            Data[i] = (IData)JsonSerializer.Deserialize(json, Data[i].GetType());
-        //        }
-        //        else
-        //        {
-        //            var json = JsonSerializer.Serialize(Data[i], Data[i].GetType(), new JsonSerializerOptions() { WriteIndented = true });
-        //            File.Create(Data[i].FileName).Close();
-        //            File.WriteAllText(Data[i].FileName, json);
-        //        }
-        //    }
-        //}
+        public void DeserializeData()
+        {
+            foreach(var set in DataList)
+            {
+                var json = File.ReadAllText(set.FileName);
+                var data = (IData)JsonSerializer.Deserialize(json, set.GetType());
+                set.LoadData(data);
+            }
+        }
+
     }
 }
