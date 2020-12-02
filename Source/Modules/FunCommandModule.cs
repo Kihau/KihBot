@@ -1,5 +1,7 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
+using KihBot.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,16 +17,31 @@ namespace KihBot.Modules
         public async Task NiceCommand(CommandContext context) 
             => await context.RespondAsync("**NICE** :)");
 
-        [Command("8ball")]
-        public async Task MagicBallCommand(CommandContext context, [RemainingText]string text)
+        [Group("8ball")]
+        public class MagicBallCommandModule : BaseCommandModule
         {
-            Random rng = new Random();
-        }
+            public FunData Data { get; set; }
+            public ConfigData Config { get; set; }
 
-        [Command("8balladd")]
-        public async Task MagicBallAddCommand(CommandContext context, [RemainingText] string text)
-        {
-            Random rng = new Random();
+            [GroupCommand]
+            public async Task MagicBallCommand(CommandContext context, [RemainingText] string text)
+            {
+                Random rng = new Random();
+                var embed = new DiscordEmbedBuilder()
+                    .AddField("Magiczna kula mówi:", Data.BaseAnswers[rng.Next(0, Data.BaseAnswers.Length)])
+                    .WithColor(Config.Color)
+                    .Build();
+
+                await context.RespondAsync(embed: embed);
+            }
+
+            [Command("add")]
+            public async Task MagicBallAddCommand(CommandContext context, [RemainingText] string text)
+            {
+                if (Data.CustomAnswers.TryGetValue(context.Guild.Id, out var strings)) 
+                    strings.Add(text);
+                else Data.CustomAnswers.Add(context.Guild.Id, new List<string>() { text });
+            }
         }
 
         [Command("test")]

@@ -15,6 +15,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using KihBot.Services;
+using System.Text.Json;
 
 namespace KihBot
 {
@@ -22,7 +23,7 @@ namespace KihBot
     {
         private DiscordClient Client { get; set; }
         private ConfigData Config { get; set; }
-        private DataSavingService Data { get; set; }
+        private DataService Data { get; set; }
 
         public DiscordBot()
         {
@@ -42,13 +43,8 @@ namespace KihBot
 
         private void LoadData(IServiceProvider services)
         {
-            Data = services.GetService<DataSavingService>();
-            Data.Deserialize();
-            Config = (ConfigData)services.GetService<List<IData>>().Single(x => x.GetType() == typeof(ConfigData));
-
-            // Clear out config from unnecessary stuff
-            Config.Prefixes.Where(x => x.Value == Config.DefaultPrefix)
-                .Select(x=>x.Key).ToList().ForEach(x => Config.Prefixes.Remove(x));
+            Data = services.GetService<DataService>();
+            Config = services.GetRequiredService<ConfigData>();
         }
 
         private void ConfigureClient()
@@ -69,7 +65,6 @@ namespace KihBot
                 PollBehaviour = PollBehaviour.KeepEmojis,
                 Timeout = TimeSpan.FromSeconds(30)
             });
-
         }
 
         private void ConfigureCommands(IServiceProvider services)
@@ -89,29 +84,27 @@ namespace KihBot
                 //StringPrefixes = new[] { "/" },               
                 PrefixResolver = resolver,                
                 DmHelp = false,
-                EnableDefaultHelp = true,
+                //EnableDefaultHelp = false,             
                 EnableMentionPrefix = false,
                 EnableDms = false,
-                // Create custom event handler
+                // Create custom command handler
                 Services = services
             };
 
             var commands = Client.UseCommandsNext(commandconfig);
             commands.RegisterCommands(Assembly.GetExecutingAssembly());
+            commands.SetHelpFormatter<KihbotHelpFormatter>();
         }
 
         private IServiceProvider ConfigureServices()
         {
-            List<IData> DataList = new List<IData>
-            {
-                new ConfigData(),
-                new FunData()
-            };
+            var collection = new ServiceCollection()
+                .AddSingleton<ConfigData>(service => (ConfigData)JsonSerializer.Deserialize(File.ReadAllText("config.json"), typeof(ConfigData)))
+                .AddSingleton<FunData>(service => (FunData)JsonSerializer.Deserialize(File.ReadAllText("fundata.json"), typeof(FunData)))
+                .AddSingleton<DataService>();  
 
-            return new ServiceCollection()
-                .AddSingleton<List<IData>>(DataList)
-                .AddSingleton<DataSavingService>()
-                .BuildServiceProvider();
+
+            return collection.BuildServiceProvider();
         }
     }
 }

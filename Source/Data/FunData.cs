@@ -7,16 +7,11 @@ using System.Threading.Tasks;
 
 namespace KihBot.Data
 {
-    class FunData : IData
+    public class FunData
     {
-        public List<string> MagicBallAnswers { get; set; }
-
-        [JsonIgnore]
-        public string FileName { get; init; }
-        public FunData()
-        {
-            MagicBallAnswers = new List<string>();
-            this.FileName = "fundata.json";
-        }
+        public string[] BaseAnswers { get; set; }
+        public Dictionary<ulong, List<string>> CustomAnswers { get; set; }
+        public FunData() { }
+        
     }
 }

@@ -16,7 +16,7 @@ namespace KihBot.Modules
     [Description("Module containing moderator commands"), RequirePermissions(Permissions.Administrator)]
     public class ModerationCommandModule : BaseCommandModule
     {
-        public List<IData> Data { get; set; }
+        public ConfigData Config { get; set; }
 
         [Command("clear")]
         public async Task ClearMessagesCommand(CommandContext context, int amount)
@@ -40,15 +40,14 @@ namespace KihBot.Modules
         [Command("prefix")]
         public async Task SetPrefixCommand(CommandContext context, string prefix)
         {
-            var config = (ConfigData)Data.Single(x => x.GetType() == typeof(ConfigData));
-            if (config.Prefixes.ContainsKey(context.Guild.Id))
+            if (Config.Prefixes.ContainsKey(context.Guild.Id))
             {
-                if (prefix != config.DefaultPrefix)
-                    config.Prefixes[context.Guild.Id] = prefix;
-                else config.Prefixes.Remove(context.Guild.Id);   // Remove unnecessary field
+                if (prefix != Config.DefaultPrefix)
+                    Config.Prefixes[context.Guild.Id] = prefix;
+                else Config.Prefixes.Remove(context.Guild.Id);   // Remove unnecessary field
             }
             // Don't add default prefixes to the the dictionary to keep the config file clean
-            else if (prefix != config.DefaultPrefix) config.Prefixes.Add(context.Guild.Id, prefix);
+            else if (prefix != Config.DefaultPrefix) Config.Prefixes.Add(context.Guild.Id, prefix);
 
             await context.RespondAsync($"Ustawiono prefix na: `{prefix}`");
         }
@@ -60,6 +59,7 @@ namespace KihBot.Modules
 
             if (channel.Type == ChannelType.Text)
             {
+                // Create comfirmation embed
                 var confirm = new DiscordEmbedBuilder()
                     .WithTitle($"__***DETONACJA KANAŁU:***__ `{channel.Name}`")
                     .AddField($"Czy jesteś pewny, że chcesz nieodwracalnie wyczyścić ten kanał?",
@@ -67,11 +67,11 @@ namespace KihBot.Modules
                     .WithColor(DiscordColor.Violet).Build();
                 var message = await context.RespondAsync(embed: confirm);
 
+                // Add yes and no reactions
                 await message.CreateReactionAsync(DiscordEmoji.FromName(context.Client, ":white_check_mark:"));
                 await message.CreateReactionAsync(DiscordEmoji.FromName(context.Client, ":x:"));
 
                 var result = await message.WaitForReactionAsync(context.User, TimeSpan.FromSeconds(10));
-
                 await message.DeleteAsync();
 
                 if (!result.TimedOut && result.Result.Emoji == DiscordEmoji.FromName(context.Client, ":white_check_mark:"))
@@ -80,29 +80,18 @@ namespace KihBot.Modules
 
                     await Task.Delay(1000);
 
-                    List<DiscordOverwriteBuilder> overrites = new List<DiscordOverwriteBuilder>();
-                    foreach (var overwrite in channel.PermissionOverwrites.AsEnumerable())
-                        overrites.Add(await new DiscordOverwriteBuilder().FromAsync(overwrite));
-
-                    await context.Guild.CreateChannelAsync(channel.Name, channel.Type, channel.Parent, channel.Topic, null, null, overrites, channel.IsNSFW, channel.PerUserRateLimit);
+                    await channel.CloneAsync();
                     await channel.DeleteAsync();
                 }
             }
         }
 
         [Command("clone")]
-        public async Task CloneChannelAsync(CommandContext context, string name, DiscordChannel req_channel)
+        public async Task CloneChannelAsync(CommandContext context, string name, DiscordChannel req_channel = null)
         {
             var channel = req_channel ?? context.Channel;
-
-            if (channel.Type == ChannelType.Text)
-            {
-                List<DiscordOverwriteBuilder> overrites = new List<DiscordOverwriteBuilder>();
-                foreach (var overwrite in channel.PermissionOverwrites.AsEnumerable())
-                    overrites.Add(await new DiscordOverwriteBuilder().FromAsync(overwrite));
-
-                await context.Guild.CreateChannelAsync(name, channel.Type, channel.Parent, channel.Topic, null, null, overrites, channel.IsNSFW, channel.PerUserRateLimit);
-            }
+            var clone = await channel.CloneAsync();
+            await clone.ModifyAsync(x => x.Name = name);
         }
 
         [Command("kick")]

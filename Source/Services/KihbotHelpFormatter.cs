@@ -1,6 +1,7 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.CommandsNext.Entities;
+using DSharpPlus.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,15 +10,12 @@ using System.Threading.Tasks;
 
 namespace KihBot.Services
 {
-    class KihbotHelpFormatter : BaseHelpFormatter
+    public class KihbotHelpFormatter : BaseHelpFormatter
     {
-        // protected DiscordEmbedBuilder _embed;
-        // protected StringBuilder _strBuilder;
+        private DiscordEmbed embed;
 
-        public KihbotHelpFormatter(CommandContext ctx) : base(ctx)
+        public KihbotHelpFormatter(CommandContext context) : base(context)
         {
-            // _embed = new DiscordEmbedBuilder();
-            // _strBuilder = new StringBuilder();
 
             // Help formatters do support dependency injection.
             // Any required services can be specified by declaring constructor parameters. 
@@ -27,8 +25,7 @@ namespace KihBot.Services
 
         public override BaseHelpFormatter WithCommand(Command command)
         {
-            // _embed.AddField(command.Name, command.Description);            
-            // _strBuilder.AppendLine($"{command.Name} - {command.Description}");
+            embed = new DiscordEmbedBuilder().AddField(command.Name, command.Description).Build();            
 
             return this;
         }
@@ -37,8 +34,7 @@ namespace KihBot.Services
         {
             foreach (var cmd in cmds)
             {
-                // _embed.AddField(cmd.Name, cmd.Description);            
-                // _strBuilder.AppendLine($"{cmd.Name} - {cmd.Description}");
+                         
             }
 
             return this;
@@ -46,9 +42,7 @@ namespace KihBot.Services
 
         public override CommandHelpMessage Build()
         {
-            throw new NotImplementedException();
-            // return new CommandHelpMessage(embed: _embed);
-            // return new CommandHelpMessage(content: _strBuilder.ToString());
+            return new CommandHelpMessage(embed: embed);
         }
     }
 }
