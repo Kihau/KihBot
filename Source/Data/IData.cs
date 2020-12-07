@@ -11,13 +11,6 @@ namespace KihBot.Data
     {
         [JsonIgnore]
         string FileName { get; init; }
-
-        // Same method used in all classes implementing IData
-        public void LoadData(IData data)
-        {
-            var properties = this.GetType().GetProperties();
-            foreach (var prop in properties)
-                prop.SetValue(this, prop.GetValue(data));
-        }
+        public void LoadData(IData data);
     }
 }

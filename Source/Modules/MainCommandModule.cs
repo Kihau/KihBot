@@ -18,8 +18,8 @@ namespace KihBot.Modules
     {
         public ConfigData Config { get; set; }
 
-        [Command("avatar")]
-        public async Task DisplayAvatarCommand(CommandContext context, DiscordUser req_user = null, ushort? req_size = null)
+        [Command("avatar"), Description("Wyświetla awatar wybranego użytkowanika")]
+        public async Task DisplayAvatarCommand(CommandContext context, [Description("Wybrany użytkownik (np. `@Kihau` lub `Kihau#3428`)")] DiscordUser req_user = null, [Description("Rozmiar awataru w pixelach")] ushort? req_size = null)
         {
             var user = req_user ?? context.User;
             var size = req_size ?? 2048;
@@ -32,8 +32,8 @@ namespace KihBot.Modules
             await context.RespondAsync(embed: embed);
         }
 
-        [Command("emote")]
-        public async Task DisplayEmoteCommand(CommandContext context, DiscordEmoji req_emoji)
+        [Command("emote"), Description("Wyświetla wybraną emotkę")]
+        public async Task DisplayEmoteCommand(CommandContext context, [Description("Wybrana emotka")] DiscordEmoji req_emoji)
             => await context.RespondAsync(req_emoji.Url);
     }
 }

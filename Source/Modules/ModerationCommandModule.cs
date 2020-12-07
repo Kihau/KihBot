@@ -18,8 +18,8 @@ namespace KihBot.Modules
     {
         public ConfigData Config { get; set; }
 
-        [Command("clear")]
-        public async Task ClearMessagesCommand(CommandContext context, int amount)
+        [Command("clear"), Description("Czyści wybraną ilość wiadomości")]
+        public async Task ClearMessagesCommand(CommandContext context, [Description("ilość waidomości do wyczyszczenia")] int amount)
         {
             var messages = (await context.Channel.GetMessagesAsync(amount + 1)).Where(x => (DateTime.Now - x.CreationTimestamp).TotalDays < 14);
 
@@ -37,8 +37,8 @@ namespace KihBot.Modules
             await message.DeleteAsync();
         }
 
-        [Command("prefix")]
-        public async Task SetPrefixCommand(CommandContext context, string prefix)
+        [Command("prefix"), Description("Ustawia nowy prefix bota")]
+        public async Task SetPrefixCommand(CommandContext context, [Description("Nowy prefix (np. \"`/`\"")] string prefix)
         {
             if (Config.Prefixes.ContainsKey(context.Guild.Id))
             {
@@ -52,8 +52,8 @@ namespace KihBot.Modules
             await context.RespondAsync($"Ustawiono prefix na: `{prefix}`");
         }
 
-        [Command("nuke")]
-        public async Task NukeChannelAsync(CommandContext context, DiscordChannel req_channel = null)
+        [Command("nuke"), Description("Zupełnie czyści wybrany kanał")]
+        public async Task NukeChannelAsync(CommandContext context, [Description("Nazwa kanłu (np. `#channel`)")] DiscordChannel req_channel = null)
         {
             var channel = req_channel ?? context.Channel;
 
@@ -86,21 +86,21 @@ namespace KihBot.Modules
             }
         }
 
-        [Command("clone")]
-        public async Task CloneChannelAsync(CommandContext context, string name, DiscordChannel req_channel = null)
+        [Command("clone"), Description("Klonuje wybrany kanał")]
+        public async Task CloneChannelAsync(CommandContext context, [Description("Nazwa nowego kanału")] string name, [Description("Kanał do sklonowania (np. `#channel`)")] DiscordChannel req_channel = null)
         {
             var channel = req_channel ?? context.Channel;
             var clone = await channel.CloneAsync();
             await clone.ModifyAsync(x => x.Name = name);
         }
 
-        [Command("kick")]
-        public async Task KickUserCommand(CommandContext context, DiscordMember req_user, [RemainingText] string reason = null)
+        [Command("kick"), Description("Wyrzuca użytkowanika z serwera")]
+        public async Task KickUserCommand(CommandContext context, [Description("Użytkownik do wyrzucenia (np. `@Kihau` lub `Kihau#3428`)")] DiscordMember req_user, [Description("Powód wyrzucenia"), RemainingText] string reason = null)
             => await req_user.RemoveAsync(reason);
 
 
-        [Command("ban")]
-        public async Task BanUserCommand(CommandContext context, DiscordMember req_user, DateTime time, [RemainingText] string reason = null)
+        [Command("ban"), Description("Banuje użytkowanika z serwera")]
+        public async Task BanUserCommand(CommandContext context, [Description("Użytkownik do zbanowania (np. `@Kihau` lub `Kihau#3428`)")] DiscordMember req_user, [Description("Czas zbanowania (np. `10h`, `10d5h`, `21:37`)")] DateTime time, [Description("Powód zbanowania"), RemainingText] string reason = null)
         {
 
         }

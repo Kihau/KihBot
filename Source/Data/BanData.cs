@@ -8,19 +8,15 @@ using System.Threading.Tasks;
 namespace KihBot.Data
 {
     [Serializable]
-    public class FunData : IData
+    public class BanData : IData
     {
-        public Dictionary<ulong, List<string>> CustomAnswers { get; set; }
-
         [JsonIgnore]
         public string FileName { get; init; }
-        public FunData() => FileName = "fundata.json";
+        public BanData() => FileName = "bandata.json";
 
         public void LoadData(IData data)
         {
-            var properties = this.GetType().GetProperties();
-            foreach (var prop in properties)
-                prop.SetValue(this, prop.GetValue(data));
+            throw new NotImplementedException();
         }
     }
 }

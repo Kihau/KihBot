@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KihBot.Data;
@@ -33,7 +34,8 @@ namespace KihBot.Services
             {
                 var options = new JsonSerializerOptions()
                 {
-                    WriteIndented = true
+                    WriteIndented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                 };
 
                 var json = JsonSerializer.Serialize(set, set.GetType(), options);

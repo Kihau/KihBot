@@ -84,7 +84,7 @@ namespace KihBot
             {
                 //StringPrefixes = new[] { "/" },               
                 PrefixResolver = resolver,                
-                DmHelp = false,
+                DmHelp = false,          
                 //EnableDefaultHelp = false,             
                 EnableMentionPrefix = false,
                 EnableDms = false,
@@ -102,7 +102,8 @@ namespace KihBot
             var collection = new ServiceCollection()
                 .AddSingleton<ConfigData>()
                 .AddSingleton<FunData>()
-                .AddSingleton<DataService>();
+                .AddSingleton<DataService>()
+                .AddSingleton<KihbotHelpFormatter>();
             
             return collection.BuildServiceProvider();
         }

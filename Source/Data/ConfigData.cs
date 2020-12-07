@@ -19,6 +19,8 @@ namespace KihBot.Data
         public int Color { get; set; }
         public string DefaultPrefix { get; set; }
         public string DefaultCommand { get; set; }
+        // Bot author prop
+        // Bot avatar prop
 
         public List<ulong> WhitelistedUsers { get; set; }
         public Dictionary<ulong, string> Prefixes { get; set; }
