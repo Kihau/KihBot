@@ -21,6 +21,7 @@ namespace KihBot.Data
         public string DefaultCommand { get; set; }
         // Bot author prop
         // Bot avatar prop
+        // IsRunning prop - delay inf timeout task in bot.RunAsync()
 
         public List<ulong> WhitelistedUsers { get; set; }
         public Dictionary<ulong, string> Prefixes { get; set; }

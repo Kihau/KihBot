@@ -13,7 +13,7 @@ using DSharpPlus.Interactivity.Extensions;
 
 namespace KihBot.Modules
 {
-    [Description("Module containing moderator commands"), RequirePermissions(Permissions.Administrator)]
+    [Description("Module containing moderator commands"), RequireUserPermissions(Permissions.Administrator)]
     public class ModerationCommandModule : BaseCommandModule
     {
         public ConfigData Config { get; set; }
@@ -51,7 +51,7 @@ namespace KihBot.Modules
 
             await context.RespondAsync($"Ustawiono prefix na: `{prefix}`");
         }
-
+         
         [Command("nuke"), Description("Zupełnie czyści wybrany kanał")]
         public async Task NukeChannelAsync(CommandContext context, [Description("Nazwa kanłu (np. `#channel`)")] DiscordChannel req_channel = null)
         {

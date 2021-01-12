@@ -338,3 +338,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/Source/Database/config.json
+/Source/Database/fundata.json
+/Source/Database/timerdata.json

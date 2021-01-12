@@ -29,7 +29,7 @@ namespace KihBot
         {
             var services = ConfigureServices();
             LoadData(services);
-
+            
             ConfigureClient();
             ConfigureCommands(services); 
         }
@@ -38,7 +38,24 @@ namespace KihBot
         {
             DiscordActivity activity = new DiscordActivity("Hollow Knight Silksong Closed Beta", ActivityType.Playing);
             await Client.ConnectAsync(activity, UserStatus.DoNotDisturb, DateTimeOffset.Now);
-            await Task.Delay(Timeout.Infinite);
+            await Data.StartTimers(Client);
+
+            string exit = null;
+            do
+            {
+                if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+                {
+                    Console.Write("Do you want to close the bot? [y/n]: ");
+                    exit = Console.ReadLine();
+                }
+            } while (exit != "y");
+
+            await Client.DisconnectAsync();
+            Client.Dispose();
+
+            Console.Write("Do you want to save the data? [y/n]: ");
+            if (Console.ReadLine() == "y")
+                Data.SerializeData();
         }
 
         private void LoadData(IServiceProvider services)
@@ -102,8 +119,8 @@ namespace KihBot
             var collection = new ServiceCollection()
                 .AddSingleton<ConfigData>()
                 .AddSingleton<FunData>()
-                .AddSingleton<DataService>()
-                .AddSingleton<KihbotHelpFormatter>();
+                .AddSingleton<TimerData>()
+                .AddSingleton<DataService>();
             
             return collection.BuildServiceProvider();
         }

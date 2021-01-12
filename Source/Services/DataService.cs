@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
+using DSharpPlus;
 using KihBot.Data;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,14 +19,17 @@ namespace KihBot.Services
     public class DataService
     {
         public List<IData> DataList { get; set; }
+        public IServiceProvider Services { get; set; }
 
         public DataService(IServiceProvider services)
         {
+            this.Services = services;
             DataList = new List<IData>()
             {
                 services.GetRequiredService<ConfigData>(),
-                services.GetRequiredService<FunData>()
-            };
+                services.GetRequiredService<FunData>(),
+                services.GetRequiredService<TimerData>()
+            };           
         }
 
         public void SerializeData()
@@ -49,13 +53,32 @@ namespace KihBot.Services
 
         public void DeserializeData()
         {
-            foreach(var set in DataList)
+            foreach (var set in DataList)
             {
-                var json = File.ReadAllText(set.FileName);
-                var data = (IData)JsonSerializer.Deserialize(json, set.GetType());
-                set.LoadData(data);
-            }
-        }
+                if (!File.Exists(set.FileName))
+                {
+                    File.Create(set.FileName).Close();
+                    var options = new JsonSerializerOptions()
+                    {
+                        WriteIndented = true,
+                        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    };
 
+                    var json = JsonSerializer.Serialize(set, set.GetType(), options);
+                    File.WriteAllText(set.FileName, json);
+                }
+                else
+                {
+                    var json = File.ReadAllText(set.FileName);
+                    var data = (IData)JsonSerializer.Deserialize(json, set.GetType());
+                    set.LoadData(data);
+                }
+            }
+        }     
+
+        public async Task StartTimers(DiscordClient client)
+        {
+            Services.GetRequiredService<TimerData>().Start(client);
+        }
     }
 }
